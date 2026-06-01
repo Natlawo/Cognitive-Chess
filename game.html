@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>NEUROSTRAT • Integrated Cognitive Systems</title>
+  <style>
+    :root {
+      /* Pearl & Bronze Theme (Default) */
+      --bg-light: #dfcfb7;
+      --bg-dark: #8a7968;
+      --piece-white: #ffffff;
+      --piece-black: #2b2118;
+      --border-color: #d4af37;
+      --accent-color: #aa9870;
+      --ui-bg: rgba(17, 16, 22, 0.95);
+      --font-family: 'Garamond', 'Georgia', serif;
+      --board-size: min(85vw, 54vh);
+    }
+
+    /* Cyberpunk Modern Theme Switch */
+    .theme-cyberpunk {
+      --bg-light: #121f2c;
+      --bg-dark: #060b11;
+      --piece-white: #00ffcc;
+      --piece-black: #ff0055;
+      --border-color: #ff0055;
+      --accent-color: #00ffcc;
+      --ui-bg: rgba(5, 8, 12, 0.95);
+      --font-family: 'Segoe UI', -apple-system, sans-serif;
+    }
+
+    /* Emerald & Obsidian Palette */
+    .color-emerald {
+      --bg-light: #a3c6a3;
+      --bg-dark: #2d4a3e;
+      --piece-white: #e8f5e9;
+      --piece-black: #111c17;
+    }
+
+    /* SKRIN BESAR MODE OVERRIDE */
+    .large-screen-active {
+      --board-size: min(95vw, 75vh) !important;
+    }
+
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+    }
+    body {
+      font-family: var(--font-family);
+      text-align: center;
+      background: radial-gradient(circle at center, #16141c 0%, #08070a 100%);
+      color: #dfdbd3;
+      padding: 10px;
+      user-select: none;
+      -webkit-user-select: none;
+      overflow-x: hidden;
+      transition: background 0.3s;
+    }
+    h1 {
+      color: var(--border-color); 
+      text-shadow: 0 0 10px rgba(0,0,0,0.5);
+      font-size: clamp(1.3rem, 3.5vh, 2rem);
+      letter-spacing: 3px;
+      margin-bottom: 2px;
+    }
+    .subtitle {
+      color: var(--accent-color);
+      font-size: clamp(0.65rem, 1.8vh, 0.85rem);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: max-width 0.3s;
+    }
+    .large-screen-active .app-container {
+      max-width: 800px;
+    }
+
+    /* ── POP-UP POLICY NOTICE SYSTEM ── */
+    .policy-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(5, 4, 6, 0.96);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      padding: 20px;
+    }
+    .policy-box {
+      width: 100%;
+      max-width: 460px;
+      background: #111014;
+      border: 2px solid var(--border-color);
+      padding: 25px;
+      text-align: left;
+      border-radius: 4px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.9);
+    }
+    .policy-title {
+      color: var(--border-color);
+      font-size: 1.1rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 15px;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+      padding-bottom: 8px;
+    }
+    .policy-text {
+      font-size: 0.78rem;
+      line-height: 1.5;
+      color: #b5b0a5;
+      margin-bottom: 20px;
+      height: 160px;
+      overflow-y: auto;
+      padding-right: 8px;
+      border-bottom: 1px solid rgba(170, 152, 112, 0.15);
+    }
+    .policy-text::-webkit-scrollbar { width: 4px; }
+    .policy-text::-webkit-scrollbar-thumb { background: var(--accent-color); }
+    
+    .policy-check-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.75rem;
+      color: #dfcfb7;
+      margin-bottom: 20px;
+      cursor: pointer;
+    }
+    .policy-check-row input {
+      margin-top: 2px;
+      accent-color: var(--border-color);
+    }
+    .policy-btn {
+      width: 100%;
+      padding: 10px;
+      background: #1f1a16;
+      border: 1px solid var(--border-color);
+      color: #dfcfb7;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+    }
+    .policy-btn:disabled {
+      border-color: #444;
+      color: #666;
+      background: #111;
+      cursor: not-allowed;
+    }
+    .policy-btn:not(:disabled):hover {
+      background: var(--border-color);
+      color: #0d0c10;
+    }
+
+    /* ── MENU BOXES ── */
+    .menu-box {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      max-width: 520px;
+      background: var(--ui-bg);
+      border: 3px double var(--border-color);
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.8);
+      padding: 25px;
+    }
+    .theme-cyberpunk .menu-box {
+      border: 2px solid var(--border-color);
+      box-shadow: 0 0 20px rgba(255, 0, 85, 0.2);
+    }
+    .menu-title {
+      color: var(--border-color);
+      font-size: 1.1rem;
+      letter-spacing: 2px;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+    }
+    .menu-btn {
+      width: 85%;
+      background: linear-gradient(135deg, #2c251e, #1a1512);
+      color: #dfcfb7;
+      border: 1px solid var(--accent-color);
+      padding: 12px;
+      margin: 6px 0;
+      font-size: 0.85rem;
+      font-weight: bold;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .menu-btn:hover {
+      background: var(--border-color);
+      color: #0d0c10;
+    }
+    
+    .setting-row {
+      width: 85%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 10px 0;
+      font-size: 0.85rem;
+    }
+    .setting-select {
+      background: #111;
+      color: #dfcfb7;
+      border: 1px solid var(--accent-color);
+      padding: 6px 12px;
+      border-radius: 2px;
+      font-family: inherit;
+    }
+
+    /* ── GAME PLAY SCREEN ── */
+    #game-screen { 
+      display: none; 
+      width: 100%;
+    }
+
+    #control-panel {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(20, 19, 26, 0.85);
+      border: 1px solid var(--accent-color);
+      padding: 6px 12px;
+      border-radius: 3px;
+      margin-bottom: 8px;
+      gap: 6px;
+    }
+    .nav-btn {
+      background: #231e1a;
+      border: 1px solid var(--accent-color);
+      color: #dfcfb7;
+      padding: 6px 10px;
+      font-size: 0.72rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      font-weight: bold;
+      border-radius: 2px;
+    }
+    .nav-btn:hover { 
+      background: var(--border-color);
+      color: #0d0c10;
+    }
+
+    #status {
+      width: 100%;
+      height: 34px;
+      line-height: 20px;
+      margin-bottom: 8px;
+      padding: 6px 12px;
+      background: rgba(20, 19, 26, 0.8);
+      border: 1px solid var(--accent-color);
+      border-radius: 2px;
+      font-weight: bold;
+      font-size: 0.8rem;
+      letter-spacing: 0.8px;
+    }
+
+    /* BOARD CHESS */
+    #board-container {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 5px auto;
+    }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      grid-template-rows: repeat(8, 1fr);
+      width: var(--board-size);
+      height: var(--board-size);
+      border: 4px double var(--border-color); 
+      border-radius: 4px;
+      background: #111;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
+      transition: width 0.3s, height 0.3s;
+    }
+
+    .square {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: calc(var(--board-size) / 11.5);
+      cursor: pointer;
+      position: relative;
+    }
+    .light { background: var(--bg-light); transition: background 0.3s; } 
+    .dark { background: var(--bg-dark); transition: background 0.3s; }
+    
+    .piece-glide {
+      animation: smoothGlide 0.22s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    @keyframes smoothGlide {
+      from { transform: scale(0.75); opacity: 0.6; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .white-piece { color: var(--piece-white); filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.85)); }
+    .black-piece { color: var(--piece-black); filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.85)); }
+    
+    .selected { background-color: rgba(212, 175, 55, 0.45) !important; }
+    .valid-move::after {
+      content: "";
+      width: 22%;
+      height: 22%;
+      background-color: var(--border-color);
+      border-radius: 50%;
+      display: block;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .valid-move-capture {
+      box-shadow: 0 0 0 4px var(--border-color) inset !important;
+    }
+
+    #psychologyReport {
+      width: 100%;
+      margin-top: 10px;
+      padding: 12px;
+      background: var(--ui-bg);
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      display: none;
+      text-align: left;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="policy-overlay" class="policy-overlay">
+    <div class="policy-box">
+      <div class="policy-title">Cognitive & Data Policy Notice</div>
+      <div class="policy-text">
+        Welcome to NEUROSTRAT Systems.<br><br>
+        1. <strong>Cognitive Assessment:</strong> This engine monitors tactical pacing, strategic decision rates, and error frequencies to formulate a real-time psychological profile upon match completion.<br><br>
+        2. <strong>Local Computation:</strong> All analytical feedback and audio loops are synthesized locally via Web Audio API. No external telemetry or user identification metrics are extracted.<br><br>
+        3. <strong>System Integrity:</strong> By proceeding, you consent to undergo high-stress computational scenarios and direct cognitive performance feedback.
+      </div>
+      <label class="policy-check-row" for="agree-checkbox">
+        <input type="checkbox" id="agree-checkbox" onchange="togglePolicyBtn()">
+        <span>I accept the cognitive metrics tracking policy and system parameters.</span>
+      </label>
+      <button id="policy-proceed-btn" class="policy-btn" onclick="acceptPolicy()" disabled>Proceed to Engine</button>
+    </div>
+  </div>
+
+  <h1>NEUROSTRAT</h1>
+  <div class="subtitle" id="sub-title-text">Cognitive Mastery & Psychological Concept</div>
+  
+  <div class="app-container">
+    
+    <div id="menu-screen" class="menu-box">
+      <div class="menu-title" id="main-menu-title">Select Mode</div>
+      <button class="menu-btn" onclick="showAIDifficulty()" id="btn-ai-mode">Play with AI Engine</button>
+      <button class="menu-btn" onclick="initGame('friend')" id="btn-friend-mode">Play with Friend</button>
+      <button class="menu-btn" style="border-color: #aa9870;" onclick="showSettings()" id="btn-settings-mode">⚙️ Settings</button>
+    </div>
+
+    <div id="ai-menu-screen" class="menu-box" style="display: none;">
+      <div class="menu-title" id="ai-menu-title">AI Difficulty</div>
+      <button class="menu-btn" onclick="initGame('ai', 'normal')" id="btn-normal-ai">Normal Mode</button>
+      <button class="menu-btn" style="border-color: var(--border-color);" onclick="initGame('ai', 'hard')" id="btn-hard-ai">Hard Mode</button>
+      <button class="nav-btn" style="margin-top: 15px;" onclick="backToMainMenu()" id="btn-back-1">← Back</button>
+    </div>
+
+    <div id="settings-screen" class="menu-box" style="display: none;">
+      <div class="menu-title" id="settings-title">Configuration</div>
+      
+      <div class="setting-row">
+        <span id="label-lang">Language:</span>
+        <select id="select-lang" class="setting-select" onchange="updateLanguage()">
+          <option value="en">English</option>
+          <option value="ms">Bahasa Melayu</option>
+        </select>
+      </div>
+
+      <div class="setting-row">
+        <span id="label-color">Visual Palette:</span>
+        <select id="select-color" class="setting-select" onchange="updateVisualPalette()">
+          <option value="default">Pearl & Bronze</option>
+          <option value="emerald">Emerald & Obsidian</option>
+        </select>
+      </div>
+
+      <div class="setting-row">
+        <span id="label-style">UI Architecture:</span>
+        <select id="select-style" class="setting-select" onchange="updateUIStyle()">
+          <option value="classic">Classic Table</option>
+          <option value="cyberpunk">Cyberpunk Modern</option>
+        </select>
+      </div>
+
+      <button class="nav-btn" style="margin-top: 20px; width: 60%;" onclick="backToMainMenu()" id="btn-save-back">← Save & Back</button>
+    </div>
+
+    <div id="game-screen">
+      <div id="control-panel">
+        <button id="muteBtn" class="nav-btn" onclick="toggleAudio()">Vol</button>
+        <button id="undoBtn" class="nav-btn" style="border-color: var(--border-color);" onclick="triggerUndo()">⏪ Undo</button>
+        <button id="resizeBtn" class="nav-btn" style="border-color: #aa9870;" onclick="toggleScreenSize()">⛶ Size</button>
+        <div id="timer-display">00:00</div>
+        <button class="nav-btn" onclick="exitToMenu()" id="btn-exit">Exit</button>
+      </div>
+
+      <div id="status">WHITE</div>
+      
+      <div id="board-container">
+        <div id="board"></div>
+      </div>
+
+      <div id="psychologyReport"></div>
+    </div>
+
+  </div>
+
+  <p style="font-size: 0.7rem; color: #8a7968; margin-top: 8px; letter-spacing: 0.5px;" id="footer-text">
+    Mind Chess Mastery • Integrated Cognitive Systems
+  </p>
+
+  <script {nonce}>
+    let isMuted = false, isPaused = false, audioCtx = null, bgmNodes = [];
+    let moveHistory = [];
+    let currentLang = 'en';
+    let currentTheme = 'default';
+    let currentStyle = 'classic';
+    let isLargeScreen = false;
+    let isGameActive = false;
+
+    const langDoc = {
+      en: {
+        mainTitle: "Select Mode", aiMode: "Play with AI Engine", friendMode: "Play with Friend", settingsMode: "⚙️ Settings",
+        aiTitle: "AI Difficulty", normal: "Normal Mode", hard: "Hard Mode", back: "← Back",
+        configTitle: "Configuration", langOpt: "Language:", paletteOpt: "Visual Palette:", uiOpt: "UI Architecture:", saveBack: "← Save & Back",
+        whiteTurn: "WHITE", blackTurn: "BLACK", exit: "Exit",
+        txtPawnTrade: "Excellent. Tactical trade.", txtDom: "Sublime! Cognitive dominance established.", txtStrike: "Perfect! Precision neural strike.", txtExec: "Calculated execution.",
+        winMsg: "🏆 MATCH COMPLETE: Enemy King assassinated.", loseMsg: "DEFEAT: Your King has fallen."
+      },
+      ms: {
+        mainTitle: "Pilih Mod", aiMode: "Lawan Enjin AI", friendMode: "Lawan Kawan", settingsMode: "⚙️ Tetapan",
+        aiTitle: "Kesukaran AI", normal: "Mod Biasa", hard: "Mod Sukar", back: "← Kembali",
+        configTitle: "Konfigurasi Sesi", langOpt: "Pilihan Bahasa:", paletteOpt: "Warna Visual Catur:", uiOpt: "Seni Rupa UI:", saveBack: "← Simpan & Keluar",
+        whiteTurn: "PUTIH", blackTurn: "HITAM", exit: "Keluar",
+        txtPawnTrade: "Excellent. Tactical trade.", txtDom: "Sublime! Cognitive dominance established.", txtStrike: "Perfect! Precision neural strike.", txtExec: "Calculated execution.",
+        winMsg: "🏆 SELESAI: Raja musuh dibunuh.", loseMsg: "TEWAS: Raja anda tumbang."
+      }
+    };
+
+    // ── POLISI INTERAKSI MANAGEMENT ──
+    function togglePolicyBtn() {
+      const isChecked = document.getElementById('agree-checkbox').checked;
+      document.getElementById('policy-proceed-btn').disabled = !isChecked;
+    }
+
+    function acceptPolicy() {
+      document.getElementById('policy-overlay').style.display = 'none';
+      soundClick();
+      startMasterAudioEngine(); // Pasang audio sebaik sahaja butang persetujuan ditekan
+    }
+
+    function toggleScreenSize() {
+      soundClick();
+      isLargeScreen = !isLargeScreen;
+      if (isLargeScreen) {
+        document.body.classList.add('large-screen-active');
+      } else {
+        document.body.classList.remove('large-screen-active');
+      }
+      renderBoard();
+    }
+
+    function updateLanguage() {
+      soundClick();
+      currentLang = document.getElementById('select-lang').value;
+      const d = langDoc[currentLang];
+      document.getElementById('main-menu-title').textContent = d.mainTitle;
+      document.getElementById('btn-ai-mode').textContent = d.aiMode;
+      document.getElementById('btn-friend-mode').textContent = d.friendMode;
+      document.getElementById('btn-settings-mode').textContent = d.settingsMode;
+      document.getElementById('ai-menu-title').textContent = d.aiTitle;
+      document.getElementById('btn-normal-ai').textContent = d.normal;
+      document.getElementById('btn-hard-ai').textContent = d.hard;
+      document.getElementById('btn-back-1').textContent = d.back;
+      document.getElementById('btn-save-back').textContent = d.saveBack;
+      document.getElementById('settings-title').textContent = d.configTitle;
+      document.getElementById('label-lang').textContent = d.langOpt;
+      document.getElementById('label-color').textContent = d.paletteOpt;
+      document.getElementById('label-style').textContent = d.uiOpt;
+      document.getElementById('btn-exit').textContent = d.exit;
+    }
+
+    function updateVisualPalette() {
+      soundClick();
+      currentTheme = document.getElementById('select-color').value;
+      document.body.classList.remove('color-emerald');
+      if (currentTheme === 'emerald') document.body.classList.add('color-emerald');
+    }
+
+    function updateUIStyle() {
+      soundClick();
+      currentStyle = document.getElementById('select-style').value;
+      document.body.classList.remove('theme-cyberpunk');
+      if (currentStyle === 'cyberpunk') document.body.classList.add('theme-cyberpunk');
+      
+      if (!isGameActive) {
+        startMasterAudioEngine();
+      }
+    }
+
+    function showAIDifficulty() { soundClick(); document.getElementById('menu-screen').style.display = 'none'; document.getElementById('ai-menu-screen').style.display = 'flex'; }
+    function showSettings() { soundClick(); startMasterAudioEngine(); document.getElementById('menu-screen').style.display = 'none'; document.getElementById('settings-screen').style.display = 'flex'; }
+    function backToMainMenu() { soundClick(); document.getElementById('ai-menu-screen').style.display = 'none'; document.getElementById('settings-screen').style.display = 'none'; document.getElementById('menu-screen').style.display = 'flex'; }
+
+    function playSound(freq, type, duration, vol) {
+      if (isMuted) return;
+      try {
+        let AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!audioCtx) audioCtx = new AudioContext();
+        let osc = audioCtx.createOscillator();
+        let gainNode = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        osc.connect(gainNode); gainNode.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + duration);
+      } catch(e) {}
+    }
+
+    function soundClick() { playSound(220, 'sine', 0.06, 0.25); }
+    function soundCapture() { 
+      playSound(65, 'triangle', 0.25, 0.35); 
+      setTimeout(() => playSound(320, 'sine', 0.1, 0.15), 40); 
+    }
+    
+    function playLobbyDroneBGM() {
+      if (isMuted || isGameActive) return;
+      try {
+        let AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!audioCtx) audioCtx = new AudioContext();
+        let now = audioCtx.currentTime;
+
+        let lobbyChord = [220.00, 277.18, 329.63]; 
+        
+        lobbyChord.forEach(note => {
+          let vOsc = audioCtx.createOscillator();
+          let vGain = audioCtx.createGain();
+          let vFilter = audioCtx.createBiquadFilter();
+          
+          vOsc.type = 'sawtooth';
+          vOsc.frequency.setValueAtTime(note / 2, now); 
+          
+          vFilter.type = 'lowpass';
+          vFilter.frequency.setValueAtTime(220, now); 
+
+          vGain.gain.setValueAtTime(0, now);
+          vGain.gain.linearRampToValueAtTime(0.012, now + 2.0); 
+          vGain.gain.linearRampToValueAtTime(0.012, now + 5.0);
+          vGain.gain.exponentialRampToValueAtTime(0.0001, now + 7.8);
+
+          vOsc.connect(vFilter); vFilter.connect(vGain); vGain.connect(audioCtx.destination);
+          vOsc.start(now); vOsc.stop(now + 7.8);
+          bgmNodes.push(vOsc);
+        });
+      } catch(e) {}
+    }
+
+    function playClassicGameBGM() {
+      if (isMuted || !isGameActive || currentPlayer === 'gameover') return;
+      try {
+        let AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!audioCtx) audioCtx = new AudioContext();
+        let now = audioCtx.currentTime;
+
+        let gamelanScale = [220.00, 246.94, 277.18, 329.63, 392.00, 440.00];
+        
+        for (let i = 0; i < 4; i++) {
+          let noteDelay = i * 0.9;
+          let randomNote = gamelanScale[Math.floor(Math.random() * gamelanScale.length)];
+          
+          let gOsc = audioCtx.createOscillator();
+          let gGain = audioCtx.createGain();
+          gOsc.type = 'sine';
+          gOsc.frequency.setValueAtTime(randomNote, now + noteDelay);
+          
+          gGain.gain.setValueAtTime(0.016, now + noteDelay);
+          gGain.gain.exponentialRampToValueAtTime(0.0001, now + noteDelay + 1.2);
+          
+          gOsc.connect(gGain); gGain.connect(audioCtx.destination);
+          gOsc.start(now + noteDelay); gOsc.stop(now + noteDelay + 1.2);
+          bgmNodes.push(gOsc);
+        }
+
+        let baseNote = gamelanScale[Math.floor(Math.random() * 2)];
+        let vOsc = audioCtx.createOscillator();
+        let vGain = audioCtx.createGain();
+        let vFilter = audioCtx.createBiquadFilter();
+        vOsc.type = 'sawtooth';
+        vOsc.frequency.setValueAtTime(baseNote, now);
+        vFilter.type = 'lowpass';
+        vFilter.frequency.setValueAtTime(260, now);
+        vGain.gain.setValueAtTime(0, now);
+        vGain.gain.linearRampToValueAtTime(0.008, now + 1.5);
+        vGain.gain.linearRampToValueAtTime(0.008, now + 4.5);
+        vGain.gain.exponentialRampToValueAtTime(0.0001, now + 5.8);
+        vOsc.connect(vFilter); vFilter.connect(vGain); vGain.connect(audioCtx.destination);
+        vOsc.start(now); vOsc.stop(now + 5.8);
+        bgmNodes.push(vOsc);
+
+      } catch(e) {}
+    }
+
+    function playCyberpunkGameBGM() {
+      if (isMuted || !isGameActive || currentPlayer === 'gameover') return;
+      try {
+        let AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!audioCtx) audioCtx = new AudioContext();
+        let now = audioCtx.currentTime;
+
+        let cyberScale = [146.83, 164.81, 196.00, 220.00, 293.66, 329.63];
+        
+        for (let i = 0; i < 4; i++) {
+          let noteDelay = i * 1.0; 
+          let baseNote = cyberScale[Math.floor(Math.random() * cyberScale.length)];
+          
+          let pOsc = audioCtx.createOscillator();
+          let pGain = audioCtx.createGain();
+          let pFilter = audioCtx.createBiquadFilter();
+          
+          pOsc.type = 'triangle'; 
+          pOsc.frequency.setValueAtTime(baseNote * 2, now + noteDelay); 
+          
+          pFilter.type = 'lowpass';
+          pFilter.frequency.setValueAtTime(600, now + noteDelay); 
+
+          pGain.gain.setValueAtTime(0.015, now + noteDelay);
+          pGain.gain.exponentialRampToValueAtTime(0.0001, now + noteDelay + 1.4);
+          
+          pOsc.connect(pFilter); pFilter.connect(pGain); pGain.connect(audioCtx.destination);
+          pOsc.start(now + noteDelay); pOsc.stop(now + noteDelay + 1.4);
+          bgmNodes.push(pOsc);
+        }
+
+        let lowBass = cyberScale[0] / 2;
+        let bOsc = audioCtx.createOscillator();
+        let bGain = audioCtx.createGain();
+        bOsc.type = 'sine';
+        bOsc.frequency.setValueAtTime(lowBass, now);
+        bGain.gain.setValueAtTime(0, now);
+        bGain.gain.linearRampToValueAtTime(0.02, now + 1.0);
+        bGain.gain.exponentialRampToValueAtTime(0.0001, now + 5.5);
+        bOsc.connect(bGain); bGain.connect(audioCtx.destination);
+        bOsc.start(now); bOsc.stop(now + 5.5);
+        bgmNodes.push(bOsc);
+
+      } catch(e) {}
+    }
+
+    let bgmInterval = null;
+    function startMasterAudioEngine() {
+      // Sekat pengaktifan audio jika pelawat belum menekan butang persetujuan
+      if (document.getElementById('policy-overlay').style.display !== 'none') return;
+
+      if (bgmInterval) clearInterval(bgmInterval);
+      bgmNodes.forEach(node => { try { node.stop(); } catch(e){} });
+      bgmNodes = [];
+
+      if (!isGameActive) {
+        playLobbyDroneBGM();
+        bgmInterval = setInterval(playLobbyDroneBGM, 8000);
+      } else {
+        if (currentStyle === 'cyberpunk') {
+          playCyberpunkGameBGM();
+          bgmInterval = setInterval(playCyberpunkGameBGM, 6000);
+        } else {
+          playClassicGameBGM();
+          bgmInterval = setInterval(playClassicGameBGM, 6000);
+        }
+      }
+    }
+
+    let secondsElapsed = 0, timerInterval = null;
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (isPaused) return;
+        secondsElapsed++;
+        let mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
+        let secs = (secondsElapsed % 60).toString().padStart(2, '0');
+        document.getElementById('timer-display').textContent = `${mins}:${secs}`;
+      }, 1000);
+    }
+
+    const piecesSymbols = { 
+      'R':'♖', 'N':'♘', 'B':'♗', 'Q':'♕', 'K':'♔', 'P':'♙', 
+      'r':'♜', 'n':'♞', 'b':'♝', 'q':'♛', 'k':'♚', 'p':'♟' 
+    };
+    let board, selected, validMoves, currentPlayer, gameMode, aiDifficulty, moveCount, lastTargetSquare = null;
+
+    function saveState() {
+      let boardClone = board.map(row => [...row]);
+      moveHistory.push({ board: boardClone, currentPlayer: currentPlayer, moveCount: moveCount });
+    }
+
+    function triggerUndo() {
+      if (moveHistory.length === 0 || currentPlayer === 'gameover') return;
+      soundClick();
+      let targetState = null;
+      if (gameMode === 'ai') {
+        if (moveHistory.length >= 2) { moveHistory.pop(); targetState = moveHistory.pop(); }
+      } else {
+        targetState = moveHistory.pop();
+      }
+      if (targetState) {
+        board = targetState.board; currentPlayer = targetState.currentPlayer; moveCount = targetState.moveCount;
+        selected = null; validMoves = []; lastTargetSquare = null;
+        document.getElementById('status').textContent = (currentPlayer === 'player') ? langDoc[currentLang].whiteTurn : langDoc[currentLang].blackTurn;
+        renderBoard();
+      }
+    }
+
+    function initGame(mode, difficulty = 'normal') {
+      soundClick();
+      gameMode = mode; aiDifficulty = difficulty; currentPlayer = 'player';
+      moveCount = 0; secondsElapsed = 0; isPaused = false; moveHistory = []; lastTargetSquare = null;
+      isGameActive = true; 
+      document.getElementById('timer-display').textContent = "00:00";
+      
+      board = [
+        ['r','n','b','q','k','b','n','r'],
+        ['p','p','p','p','p','p','p','p'],
+        ['.','.','.','.','.','.','.','.'],
+        ['.','.','.','.','.','.','.','.'],
+        ['.','.','.','.','.','.','.','.'],
+        ['.','.','.','.','.','.','.','.'],
+        ['P','P','P','P','P','P','P','P'],
+        ['R','N','B','Q','K','B','N','R']
+      ];
+      selected = null; validMoves = [];
+      document.getElementById('menu-screen').style.display = 'none';
+      document.getElementById('ai-menu-screen').style.display = 'none';
+      document.getElementById('settings-screen').style.display = 'none';
+      document.getElementById('game-screen').style.display = 'block';
+      document.getElementById('psychologyReport').style.display = 'none';
+      document.getElementById('status').textContent = langDoc[currentLang].whiteTurn;
+
+      startMasterAudioEngine(); startTimer(); renderBoard();
+    }
+
+    function renderBoard() {
+      const boardEl = document.getElementById('board');
+      boardEl.innerHTML = '';
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          const square = document.createElement('div');
+          square.classList.add('square', (r + c) % 2 === 0 ? 'light' : 'dark');
+          
+          const piece = board[r][c];
+          if (piece !== '.') {
+            square.innerHTML = piecesSymbols[piece];
+            square.classList.add(piece === piece.toUpperCase() ? 'white-piece' : 'black-piece');
+            if (lastTargetSquare && lastTargetSquare.row === r && lastTargetSquare.col === c) {
+              square.classList.add('piece-glide');
+            }
+          }
+
+          if (selected && selected.row === r && selected.col === c) square.classList.add('selected');
+          const moveInfo = validMoves.find(m => m.row === r && m.col === c);
+          if (moveInfo) square.classList.add(moveInfo.isCapture ? 'valid-move-capture' : 'valid-move');
+
+          square.addEventListener('click', () => handleClick(r, c));
+          boardEl.appendChild(square);
+        }
+      }
+    }
+
+    function generatePsyMessage(attacker, victim) {
+      const att = attacker.toUpperCase(); const vic = victim.toUpperCase();
+      const d = langDoc[currentLang];
+      if (att === 'P' && vic === 'P') return d.txtPawnTrade;
+      if ((att === 'P' || att === 'N' || att === 'B') && (vic === 'Q' || vic === 'R')) return d.txtDom;
+      if ((att === 'N' || att === 'B' || att === 'R' || att === 'Q') && (vic === 'Q' || vic === 'R')) return d.txtStrike;
+      return d.txtExec;
+    }
+
+    function handleClick(row, col) {
+      if (isPaused || currentPlayer === 'gameover') return;
+      if (gameMode === 'ai' && currentPlayer !== 'player') return;
+
+      soundClick();
+
+      const matchedMove = validMoves.find(m => m.row === row && m.col === col);
+      if (matchedMove) {
+        saveState();
+        let capturedPiece = board[row][col];
+        let movingPiece = board[selected.row][selected.col];
+        lastTargetSquare = { row, col };
+
+        if (matchedMove.isCapture) {
+          setTimeout(() => soundCapture(), 15); 
+          document.getElementById('status').textContent = generatePsyMessage(movingPiece, capturedPiece);
+        } else {
+          document.getElementById('status').textContent = (gameMode === 'ai') ? langDoc[currentLang].blackTurn : (currentPlayer === 'player' ? langDoc[currentLang].blackTurn : langDoc[currentLang].whiteTurn);
+        }
+
+        movePiece(selected.row, selected.col, row, col);
+        selected = null; validMoves = []; renderBoard(); moveCount++;
+
+        if (!checkPiecesAlive('k')) { endGame(langDoc[currentLang].winMsg); return; }
+        if (!checkPiecesAlive('K')) { endGame(langDoc[currentLang].loseMsg); return; }
+
+        if (gameMode === 'ai') {
+          currentPlayer = 'ai';
+          setTimeout(botEngineTurn, 700);
+        } else {
+          currentPlayer = currentPlayer === 'player' ? 'player2' : 'player';
+        }
+        return;
+      }
+
+      const piece = board[row][col];
+      const isWhite = (piece !== '.' && piece === piece.toUpperCase());
+      const isBlack = (piece !== '.' && piece === piece.toLowerCase());
+
+      if ((currentPlayer === 'player' && isWhite) || (currentPlayer === 'player2' && isBlack)) {
+        selected = {row, col}; validMoves = calculateValidMoves(row, col, piece);
+        renderBoard();
+      } else {
+        selected = null; validMoves = []; renderBoard();
+      }
+    }
+
+    function calculateValidMoves(r, c, type) {
+      let moves = []; const isWhite = (type === type.toUpperCase());
+      const isEnemy = (tR, tC) => {
+        const t = board[tR][tC]; if (t === '.') return false;
+        return isWhite ? (t === t.toLowerCase()) : (t === t.toUpperCase());
+      };
+      const isEmpty = (tR, tC) => board[tR][tC] === '.';
+
+      if (type === 'P') { 
+        if (r - 1 >= 0 && isEmpty(r - 1, c)) {
+          moves.push({ row: r - 1, col: c, isCapture: false });
+          if (r === 6 && isEmpty(r - 2, c)) moves.push({ row: r - 2, col: c, isCapture: false });
+        }
+        if (r - 1 >= 0 && c - 1 >= 0 && isEnemy(r - 1, c - 1)) moves.push({ row: r - 1, col: c - 1, isCapture: true });
+        if (r - 1 >= 0 && c + 1 < 8 && isEnemy(r - 1, c + 1)) moves.push({ row: r - 1, col: c + 1, isCapture: true });
+      }
+      else if (type === 'p') { 
+        if (r + 1 < 8 && isEmpty(r + 1, c)) {
+          moves.push({ row: r + 1, col: c, isCapture: false });
+          if (r === 1 && isEmpty(r + 2, c)) moves.push({ row: r + 2, col: c, isCapture: false });
+        }
+        if (r + 1 < 8 && c - 1 >= 0 && isEnemy(r + 1, c - 1)) moves.push({ row: r + 1, col: c - 1, isCapture: true });
+        if (r + 1 < 8 && c + 1 < 8 && isEnemy(r + 1, c + 1)) moves.push({ row: r + 1, col: c + 1, isCapture: true });
+      }
+      
+      const knightOffsets = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+      if (type.toUpperCase() === 'N') {
+        knightOffsets.forEach(([dr, dc]) => {
+          let nr = r + dr, nc = c + dc;
+          if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8) {
+            if (isEmpty(nr, nc)) moves.push({ row: nr, col: nc, isCapture: false });
+            else if (isEnemy(nr, nc)) moves.push({ row: nr, col: nc, isCapture: true });
+          }
+        });
+      }
+
+      const kingOffsets = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+      if (type.toUpperCase() === 'K') {
+        kingOffsets.forEach(([dr, dc]) => {
+          let nr = r + dr, nc = c + dc;
+          if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8) {
+            if (isEmpty(nr, nc)) moves.push({ row: nr, col: nc, isCapture: false });
+            else if (isEnemy(nr, nc)) moves.push({ row: nr, col: nc, isCapture: true });
+          }
+        });
+      }
+
+      let directions = []; const uType = type.toUpperCase();
+      if (uType === 'R' || uType === 'Q') directions.push([-1,0],[1,0],[0,-1],[0,1]);
+      if (uType === 'B' || uType === 'Q') directions.push([-1,-1],[-1,1],[1,-1],[1,1]);
+
+      directions.forEach(([dr, dc]) => {
+        let nr = r + dr, nc = c + dc;
+        while (nr >= 0 && nr < 8 && nc >= 0 && nc < 8) {
+          if (isEmpty(nr, nc)) { moves.push({ row: nr, col: nc, isCapture: false }); } 
+          else { if (isEnemy(nr, nc)) moves.push({ row: nr, col: nc, isCapture: true }); break; }
+          nr += dr; nc += dc;
+        }
+      });
+      return moves;
+    }
+
+    function movePiece(fromR, fromC, toR, toC) {
+      board[toR][toC] = board[fromR][fromC]; board[fromR][fromC] = '.';
+    }
+
+    function botEngineTurn() {
+      let aiMoves = [];
+      
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          if (board[r][c] !== '.' && board[r][c] === board[r][c].toLowerCase()) {
+            let moves = calculateValidMoves(r, c, board[r][c]);
+            
+            moves.forEach(m => {
+              let weight = 0;
+              let pieceType = board[r][c].toUpperCase();
+              let targetPiece = board[m.row][m.col];
+              
+              const values = { 'K': 1000, 'Q': 90, 'R': 50, 'B': 30, 'N': 30, 'P': 10 };
+              
+              if (m.isCapture) {
+                let victimValue = values[targetPiece.toUpperCase()] || 10;
+                let attackerValue = values[pieceType] || 10;
+                weight += (victimValue * 15) - attackerValue;
+              }
+              
+              if (aiDifficulty === 'hard') {
+                if (m.row >= 2 && m.row <= 5 && m.col >= 2 && m.col <= 5) {
+                  weight += 4;
+                }
+                if (pieceType === 'P' || pieceType === 'N' || pieceType === 'B') {
+                  weight += m.row; 
+                }
+                if (pieceType === 'Q' && !m.isCapture) {
+                  weight -= 5; 
+                }
+              } else {
+                if (m.isCapture) weight += 10;
+                weight += Math.floor(Math.random() * 5); 
+              }
+              
+              aiMoves.push({ 
+                fromR: r, fromC: c, 
+                toR: m.row, toC: m.col, 
+                weight: weight, 
+                isCap: m.isCapture 
+              });
+            });
+          }
+        }
+      }
+
+      if (aiMoves.length > 0) {
+        aiMoves.sort((a, b) => b.weight - a.weight);
+        const maxWeight = aiMoves[0].weight;
+        const bestMoves = aiMoves.filter(m => m.weight === maxWeight);
+        const chosen = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+        
+        let capturedByAI = board[chosen.toR][chosen.toC];
+        let movingAIPiece = board[chosen.fromR][chosen.fromC];
+        lastTargetSquare = { row: chosen.toR, col: chosen.toC };
+
+        if (chosen.isCap) {
+          soundCapture();
+          document.getElementById('status').textContent = generatePsyMessage(movingAIPiece, capturedByAI);
+        } else {
+          soundClick();
+          document.getElementById('status').textContent = langDoc[currentLang].whiteTurn;
+        }
+
+        movePiece(chosen.fromR, chosen.fromC, chosen.toR, chosen.toC);
+        if (!checkPiecesAlive('K')) { renderBoard(); endGame(langDoc[currentLang].loseMsg); return; }
+      }
+      currentPlayer = 'player'; renderBoard();
+    }
+
+    function checkPiecesAlive(char) {
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) { if (board[r][c] === char) return true; }
+      }
+      return false;
+    }
+
+    function toggleAudio() {
+      soundClick();
+      isMuted = !isMuted;
+      if(isMuted) { bgmNodes.forEach(node => { try { node.stop(); }catch(e){} }); bgmNodes = []; } 
+      else { startMasterAudioEngine(); }
+    }
+
+    function exitToMenu() {
+      soundClick();
+      isGameActive = false; 
+      clearInterval(timerInterval); clearInterval(bgmInterval);
+      startMasterAudioEngine(); 
+      document.getElementById('game-screen').style.display = 'none';
+      document.getElementById('menu-screen').style.display = 'flex';
+    }
+
+    function endGame(msg) {
+      currentPlayer = 'gameover'; clearInterval(timerInterval);
+      document.getElementById('status').textContent = msg;
+      const reportEl = document.getElementById('psychologyReport');
+      reportEl.style.display = "block";
+      reportEl.innerHTML = `<strong>🧠 STRATEGIC ASSESSMENT COMPLETE</strong><br>• Steps: ${moveCount}<br>• Duration: ${secondsElapsed}s.`;
+    }
+
+    window.onload = () => {
+      startMasterAudioEngine();
+    };
+  </script>
+</body>
+</html>
